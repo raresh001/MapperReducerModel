@@ -39,16 +39,24 @@ bool Application::Init(int argc, char* argv[]) {
 
     test_file = argv[3];
 
-    barrier.Init(M + 1);
+    mappersBarrier.Init(P + M + 1);
+    reducersBarrier.Init(P);
     threads = new Thread*[M + P];
 
     int iter = 0;
     for (; iter < M; iter++) {
-        threads[iter] = new Mapper(mappersBuff, barrier, mappersResult, mappersResultMutex);
+        threads[iter] = new Mapper(mappersBuff, mappersBarrier, mappersResult, mappersResultMutex);
     }
 
     for (; iter < P + M; iter++) {
-        threads[iter] = new Reducer;
+        threads[iter] = new Reducer(iter - M
+                                    , mappersResult
+                                    , P
+                                    , mappersBarrier
+                                    , reducersBarrier
+                                    , reducersResult
+                                    , reducersResultMutex
+                                    , letter);
     }
 
     return true;
@@ -62,25 +70,29 @@ void Application::Run() {
             threads[iter]->Start();
         }
 
-        if (!readTestFile()) {
-            return;
-        }
+        readTestFile();
 
         mappersBuff.SetFinished();
-        barrier.Wait();
-
-        for (char c = 0; c < 'z' - 'a' + 1; c++) {
-            cout << (char)(c + 'a') << endl;
-            
-            for (auto p : mappersResult[c]) {
-                cout << "(" << p.first << ", " << p.second << ") ";
-            }
-            
-            cout << endl;
-        }
+        mappersBarrier.Wait();
 
         for (iter = 0; iter < P + M; iter++) {
             threads[iter]->Join();
+        }
+
+        for (auto p : mappersResult) {
+            cout << "(" << p.first << " " << p.second << ")\n";
+        }
+
+        cout << "\n\n\n\n\n";
+
+        int i = 0;
+        for (auto p : reducersResult) {
+            cout << i++ << ": (" << p.first << ", [";
+            for (auto x : p.second) {
+                cout << x << " ";
+            }
+
+            cout << "])\n";
         }
     } catch (PthreadLibException& e) {
         cerr << "App::Run: PthreadLibException occured: " << e.what() << endl;
@@ -115,7 +127,6 @@ bool Application::readTestFile() {
     sort(fileInfos.begin(), fileInfos.end(), FileInfo::FileInfoComp());
 
     for (FileInfo* file : fileInfos) {
-        cout << file->GetID() << endl;
         mappersBuff.insert(file);
     }
 

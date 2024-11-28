@@ -13,10 +13,10 @@ public:
     void Join();
 
 protected:
+    pthread_t _id;
     virtual void Run() = 0;
 
 private:
-    pthread_t _id;
     bool _active;
 
     // this is the actual function for pthread_create

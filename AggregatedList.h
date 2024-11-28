@@ -1,9 +1,10 @@
 #ifndef _AGGREGATED_LIST_H
 #define _AGGREGATED_LIST_H
 
-#include <list>
+#include <vector>
 #include <string>
 
-typedef std::list< std::pair<std::string, unsigned int> > AggregatedList;
+typedef std::vector< std::pair<std::string, unsigned int> > AggregatedList;
+typedef std::vector< std::pair< std::string, std::vector<unsigned int> > > AggregatedReducedList;
 
 #endif  // _AGGREGATED_LIST_H

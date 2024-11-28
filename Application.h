@@ -15,7 +15,7 @@
 class Application {
 public:
     Application()
-        : threads(nullptr), test_file(nullptr), M(0), P(0) {}
+        : threads(nullptr), test_file(nullptr), M(0), P(0), letter('a') {}
     ~Application();
 
     bool Init(int argc, char* argv[]);
@@ -25,11 +25,15 @@ private:
 
     // synchronization tools for mappers
     SyncBuffer<FileInfo*> mappersBuff;
-    AggregatedList mappersResult['z' - 'a' + 1];
+    AggregatedList mappersResult;
     pthreadWrapper::Mutex mappersResultMutex;
-    pthreadWrapper::Barrier barrier;
+    pthreadWrapper::Barrier mappersBarrier;
 
     // synchronization tools for reducers
+    pthreadWrapper::Barrier reducersBarrier;
+    AggregatedReducedList reducersResult;
+    pthreadWrapper::Mutex reducersResultMutex;
+    char letter;
 
     const char* test_file;
     int M;

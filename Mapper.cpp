@@ -3,9 +3,9 @@
 
 using namespace std;
 
-unsigned int Mapper::_mapper_id_counter = 0;
-
 void Mapper::Run() {
+    // note that printing error is done in a separate file for each thread, in
+    // order to avoid any possible synchronization problems
     try {
         FileInfo* info;
         while (_buff.extract(info)) {
@@ -20,9 +20,7 @@ void Mapper::Run() {
         }
 
         _aggregatedListsMutex.Lock();
-        for (int iter = 0; iter < sizeof(_localAggregatedLists) / sizeof(*_localAggregatedLists); iter++) {
-            _aggregatedLists[iter].splice(_aggregatedLists[iter].begin(), _localAggregatedLists[iter]);
-        }
+        _mapperResult.insert(_mapperResult.end(), _localAggregatedList.begin(), _localAggregatedList.end());
         _aggregatedListsMutex.Unlock();
 
         _barrier.Wait();
@@ -46,8 +44,7 @@ void Mapper::parseLine(set<string>& fileWords, char* line, unsigned int fileid) 
             string word = line;
 
             if (fileWords.insert(word).second) {
-                _localAggregatedLists[word[0] - 'a']
-                    .push_back(std::pair<std::string, unsigned int>(word, fileid));
+                _localAggregatedList.push_back(std::pair<std::string, unsigned int>(word, fileid));
             }
 
             line = ++word_end;
@@ -63,8 +60,7 @@ void Mapper::parseLine(set<string>& fileWords, char* line, unsigned int fileid) 
         string word = line;
 
         if (fileWords.insert(word).second) {
-            _localAggregatedLists[word[0] - 'a']
-                .push_back(std::pair<std::string, unsigned int>(word, fileid));
+            _localAggregatedList.push_back(std::pair<std::string, unsigned int>(word, fileid));
         }
     }
 }

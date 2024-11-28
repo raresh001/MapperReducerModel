@@ -4,7 +4,11 @@
 #include "pthreadWrappers/Mutex.h"
 #include "pthreadWrappers/Semaphore.h"
 
-// assume that only one thread inserts elements and all the rest extract them
+/**
+ * Template for a circular queue that allows one producer to insert elements 
+ * and any number of consumers to extract them; this class allows the producer
+ * to announce the end of tasks
+*/
 template <typename T>
 class SyncBuffer {
 public:
@@ -49,7 +53,7 @@ public:
         _extractSem.Post();
     }
 
-private:
+protected:
     T* _elems;
     size_t _size;
 

@@ -6,7 +6,8 @@ Thread::~Thread() {
         std::cerr << "CAREFUL: ~Thread is called before Join() for thread with id " 
                     << _id 
                     << std::endl;
-        PRINT_PTHREAD_FUNC_ERR("pthread_join", pthread_join(_id, nullptr));
+        if (int ret = pthread_join(_id, nullptr))
+            PRINT_PTHREAD_FUNC_ERR("pthread_join", ret);
     }
 }
 
